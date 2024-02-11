@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Scraper</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 20px;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #scrapeForm {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    #inputText {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background-color: #4caf50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .column {
+      float: left;
+      width: 33.33%;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    .image-column {
+      background-color: #f2f2f2;
+    }
+
+    .video-column {
+      background-color: #d9d9d9;
+    }
+
+    .link-column {
+      background-color: #e6f7ff;
+    }
+
+    #resultContainer {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #textContent {
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Web Scraper</h1>
+  <form id="scrapeForm">
+    <label for="inputText">Enter URL:</label>
+    <input type="text" id="inputText" name="url" required>
+    <button type="button" onclick="scrapePage()">Scrape</button>
+  </form>
+
+  <div id="resultContainer">
+    <h2>Scraped Content:</h2>
+    <pre id="textContent"></pre>
+  </div>
+
+  <div class="column image-column" id="imageColumn">
+    <h2>Images:</h2>
+  </div>
+
+  <div class="column video-column" id="videoColumn">
+    <h2>Video Sources:</h2>
+  </div>
+
+  <div class="column link-column" id="linkColumn">
+    <h2>Links:</h2>
+  </div>
+
+  <script>
+    async function scrapePage() {
+      const url = document.getElementById('inputText').value;
+
+      if (!url) {
+        alert('Please enter a URL.');
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:1000/scrape', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to scrape page.');
+        }
+
+        const data = await response.json();
+
+        // Display text content
+        document.getElementById('textContent').innerText = data.textContent;
+
+        // Display images
+        displayUrls(data.imageUrls, 'imageColumn');
+
+        // Display video sources
+        displayUrls(data.videoSources, 'videoColumn');
+
+        // Display links
+        displayUrls(data.linkUrls, 'linkColumn');
+      } catch (error) {
+        console.error('Error:', error.message);
+      }
+    }
+
+    function displayUrls(urls, columnId) {
+      const column = document.getElementById(columnId);
+      const list = document.createElement('ul');
+
+      urls.forEach((url) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = url;
+        list.appendChild(listItem);
+      });
+
+      column.appendChild(list);
+    }
+  </script>
+</body>
+</html>
