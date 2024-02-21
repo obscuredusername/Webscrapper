@@ -50,14 +50,29 @@ async function scrapeDynamicContent(url) {
       textContent.push(`<${tag}>${content}</${tag}>`);
     });
 
-    const textFileName = path.join(__dirname, 'text_content.txt');
+    // Write CSV files
+    const textFileName = path.join(__dirname, 'text_content.csv');
     await fs.writeFile(textFileName, textContent.join('\n'));
 
-    // Write CSV file with text content
-    const csvFileName = path.join(__dirname, 'data.csv');
-    await fs.writeFile(csvFileName, textContent.join('\n'));
+    const imageFileName = path.join(__dirname, 'image_links.csv');
+    await fs.writeFile(imageFileName, imageUrls.join('\n'));
 
-    return { textContent: textContent.join('\n'), imageUrls, videoSources, linkUrls };
+    const videoFileName = path.join(__dirname, 'video_links.csv');
+    await fs.writeFile(videoFileName, videoSources.join('\n'));
+
+    const linkFileName = path.join(__dirname, 'link_urls.csv');
+    await fs.writeFile(linkFileName, linkUrls.join('\n'));
+
+    return {
+      textFileName,
+      imageFileName,
+      videoFileName,
+      linkFileName,
+      textContent: textContent.join('\n'),
+      imageUrls,
+      videoSources,
+      linkUrls,
+    };
   } catch (error) {
     console.error('Error during scraping:', error.message);
     return { error: 'Internal Server Error' };
