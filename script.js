@@ -28,24 +28,36 @@ async function scrapeDynamicContent(url) {
 
     // Extract and save content with proper HTML tags to a text file
     const textContent = [];
-    $('h1, h2, h3, h4, p, span').each((index, element) => {
+    const imageUrls = [];
+    const videoSources = [];
+    const linkUrls = [];
+
+    $('h1, h2, h3, h4, p, span, img, video, a').each((index, element) => {
       const tag = $(element).prop('tagName').toLowerCase();
       const content = $(element).text().trim();
+
+      if (tag === 'img') {
+        const imageUrl = $(element).attr('src');
+        if (imageUrl) imageUrls.push(imageUrl);
+      } else if (tag === 'video') {
+        const videoSource = $(element).attr('src');
+        if (videoSource) videoSources.push(videoSource);
+      } else if (tag === 'a') {
+        const linkUrl = $(element).attr('href');
+        if (linkUrl) linkUrls.push(linkUrl);
+      }
+
       textContent.push(`<${tag}>${content}</${tag}>`);
     });
 
     const textFileName = path.join(__dirname, 'text_content.txt');
     await fs.writeFile(textFileName, textContent.join('\n'));
 
-    const imageUrls = $('img').map((index, element) => $(element).attr('src')).get();
-    const videoSources = $('video source').map((index, element) => $(element).attr('src')).get();
-    const linkUrls = $('a').map((index, element) => $(element).attr('href')).get();
+    // Write CSV file with text content
+    const csvFileName = path.join(__dirname, 'data.csv');
+    await fs.writeFile(csvFileName, textContent.join('\n'));
 
-    await fs.writeFile(path.join(__dirname, 'imageUrls.txt'), imageUrls.join('\n'));
-    await fs.writeFile(path.join(__dirname, 'videoSources.txt'), videoSources.join('\n'));
-    await fs.writeFile(path.join(__dirname, 'linkUrls.txt'), linkUrls.join('\n'));
-
-    return { textContent, imageUrls, videoSources, linkUrls };
+    return { textContent: textContent.join('\n'), imageUrls, videoSources, linkUrls };
   } catch (error) {
     console.error('Error during scraping:', error.message);
     return { error: 'Internal Server Error' };
@@ -57,20 +69,18 @@ async function scrapeDynamicContent(url) {
 async function autoScroll(page) {
   await page.evaluate(async () => {
     await new Promise((resolve) => {
-      let totalHeight = 0;
-      const distance = 100;
-      const interval = 100;
+      const maxScrolls = 10; // Adjust the number of scrolls as needed
+      let scrolled = 0;
 
-      const timer = setInterval(() => {
-        const scrollHeight = document.body.scrollHeight;
-        window.scrollBy(0, distance);
-        totalHeight += distance;
+      const intervalId = setInterval(() => {
+        window.scrollBy(0, window.innerHeight);
+        scrolled++;
 
-        if (totalHeight >= scrollHeight) {
-          clearInterval(timer);
+        if (scrolled >= maxScrolls) {
+          clearInterval(intervalId);
           resolve();
         }
-      }, interval);
+      }, 1000); // Adjust the interval as needed
     });
   });
 }
